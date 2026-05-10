@@ -1,0 +1,3 @@
+student@haifa.ac.il Abc12345!
+layan@gmail.com Test1234!
+bad-email 123
