@@ -3,6 +3,9 @@ package com.example.lab2;
 public class User implements Comparable<User> {
     private String username;
     private String password;
+    private int failedAttempts;
+    private boolean blocked;
+    private long blockedAt;
 
     public User(String username, String password) {
         validateUsername(username);
@@ -10,6 +13,9 @@ public class User implements Comparable<User> {
 
         this.username = username;
         this.password = password;
+        this.failedAttempts = 0;
+        this.blocked = false;
+        this.blockedAt = 0;
     }
 
     public String getName() {
@@ -96,6 +102,30 @@ public class User implements Comparable<User> {
         if (!hasLetter || !hasDigit || !hasSymbol) {
             throw new IllegalArgumentException("Please enter a valid password");
         }
+    }
+
+    public int getFailedAttempts() {
+        return failedAttempts;
+    }
+
+    public void setFailedAttempts(int failedAttempts) {
+        this.failedAttempts = failedAttempts;
+    }
+
+    public boolean isBlocked() {
+        return blocked;
+    }
+
+    public void setBlocked(boolean blocked) {
+        this.blocked = blocked;
+    }
+
+    public long getBlockedAt() {
+        return blockedAt;
+    }
+
+    public void setBlockedAt(long blockedAt) {
+        this.blockedAt = blockedAt;
     }
 
     @Override

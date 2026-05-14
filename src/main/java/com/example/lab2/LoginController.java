@@ -28,10 +28,12 @@ public class LoginController {
     private Button loginButton;
 
     private ArrayList<User> users;
+    private LoginSecurityManager securityManager;
 
     @FXML
     public void initialize() {
         users = UsersReader.readUsers();
+        securityManager = LoginApplication.getSecurityManager();
     }
 
     @FXML
@@ -39,14 +41,68 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        for (User user : users) {
-            if (user.getName().equals(username) && user.getPassword().equals(password)) {
-                openWelcomeScreen();
+        User user = findUserByUsername(username);
+
+        if (user == null) {
+            errorLabel.setText("user or password do not match");
+            return;
+        }
+
+        if (user.getPassword().equals(password)) {
+            BlockedCheckThread blockedCheckThread =
+                    new BlockedCheckThread(user, securityManager);
+
+            blockedCheckThread.start();
+
+            try {
+                blockedCheckThread.join();
+            } catch (InterruptedException e) {
+                errorLabel.setText("Login interrupted");
                 return;
+            }
+
+            if (blockedCheckThread.isBlocked()) {
+                errorLabel.setText("User is blocked. Please try again later.");
+                return;
+            }
+
+            user.setFailedAttempts(0);
+            openWelcomeScreen();
+        } else {
+            if (securityManager.isUserBlocked(user)) {
+                errorLabel.setText("User is blocked. Please try again later.");
+                return;
+            }
+
+            FailedLoginThread failedLoginThread =
+                    new FailedLoginThread(user, securityManager);
+
+            failedLoginThread.start();
+
+            try {
+                failedLoginThread.join();
+            } catch (InterruptedException e) {
+                errorLabel.setText("Login interrupted");
+                return;
+            }
+
+            if (user.isBlocked()) {
+                errorLabel.setText("Too many failed attempts. User is blocked.");
+            } else {
+                errorLabel.setText("user or password do not match. Remaining attempts: "
+                        + securityManager.getRemainingAttempts(user));
+            }
+        }
+    }
+
+    private User findUserByUsername(String username) {
+        for (User user : users) {
+            if (user.getName().equals(username)) {
+                return user;
             }
         }
 
-        errorLabel.setText("user or password do not match");
+        return null;
     }
 
     private void openWelcomeScreen() {
